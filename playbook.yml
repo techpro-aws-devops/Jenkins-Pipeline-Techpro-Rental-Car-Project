@@ -72,10 +72,10 @@
         aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}   
 
 
-    - name: Set environment variables and run envsubst in one task
-      shell: |
-        export DOMAIN_NAME=techprodevops.com
-        envsubst '${DOMAIN_NAME}' < {{ compose_dir }}/nginx-temp.conf > {{ compose_dir }}/nginx.conf
+    # - name: Set environment variables and run envsubst in one task
+    #   shell: |
+    #     export DOMAIN_NAME=techprodevops.com
+    #     envsubst '${DOMAIN_NAME}' < {{ compose_dir }}/nginx-temp.conf > {{ compose_dir }}/nginx.conf
 
 
     - name: Copy docker-compose.yml to the server
