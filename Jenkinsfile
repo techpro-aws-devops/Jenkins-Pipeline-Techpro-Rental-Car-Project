@@ -45,8 +45,6 @@ pipeline {
                 echo 'env update'
                 sh """
                 envsubst < docker-compose-template.yml > docker-compose.yml
-                export DOMAIN_NAME=techprodevops.com
-                envsubst '${DOMAIN_NAME}' < nginx-temp.conf > nginx.conf
                 """
             }
         }
