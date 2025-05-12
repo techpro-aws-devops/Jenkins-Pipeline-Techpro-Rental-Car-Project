@@ -21,8 +21,8 @@ variable "user" {
 }
 
 resource "aws_instance" "managed_nodes" {
-  ami = "ami-0230bd60aa48260c6"
-  instance_type = "t2.micro"
+  ami = "ami-0f88e80871fd81e91"
+  instance_type = "t3a.medium"
   key_name = var.key
   vpc_security_group_ids = [aws_security_group.tf-sec-gr.id]
   iam_instance_profile = "jenkins-project-profile-${var.user}"
@@ -45,21 +45,21 @@ resource "aws_security_group" "tf-sec-gr" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port   = 5000
+    from_port   = 80
     protocol    = "tcp"
-    to_port     = 5000
+    to_port     = 80
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port   = 3000
+    from_port   = 8000
     protocol    = "tcp"
-    to_port     = 3000
+    to_port     = 8000
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port   = 5432
+    from_port   = 3306
     protocol    = "tcp"
-    to_port     = 5432
+    to_port     = 3306
     cidr_blocks = ["0.0.0.0/0"]
   }
 
