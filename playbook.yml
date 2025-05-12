@@ -72,6 +72,12 @@
         aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}   
 
 
+    - name: Set environment variables and run envsubst in one task
+      shell: |
+        export DOMAIN_NAME=techprodevops.com
+        envsubst '${DOMAIN_NAME}' < {{ compose_dir }}/nginx-temp.conf > {{ compose_dir }}/nginx.conf
+
+
     - name: Copy docker-compose.yml to the server
       copy:
         src: "{{ compose_dir }}/docker-compose.yml"
@@ -82,10 +88,10 @@
         src: "{{ compose_dir }}/nginx.conf"
         dest: /home/ec2-user/nginx.conf
 
-    - name: Copy wsgi.py to the server
-      copy:
-        src: "{{ compose_dir }}/App/wsgi.py"
-        dest: /home/ec2-user/wsgi.py
+    # - name: Copy wsgi.py to the server
+    #   copy:
+    #     src: "{{ compose_dir }}/App/wsgi.py"
+    #     dest: /home/ec2-user/wsgi.py
         
     - name: Start Docker Compose
       command: docker-compose up -d
