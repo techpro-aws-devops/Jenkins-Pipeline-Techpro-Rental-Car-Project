@@ -76,8 +76,13 @@
       copy:
         src: "{{ compose_dir }}/docker-compose.yml"
         dest: /home/ec2-user/docker-compose.yml
+
+    - name: Copy docker-compose.yml to the server
+      copy:
+        src: "{{ compose_dir }}/nginx.conf"
+        dest: /home/ec2-user/nginx.conf
         
     - name: Start Docker Compose
       command: docker-compose up -d
       args:
-        chdir: "{{ compose_dir }}"
+        chdir: /home/ec2-user/
