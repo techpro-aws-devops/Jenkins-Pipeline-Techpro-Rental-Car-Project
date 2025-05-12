@@ -80,4 +80,4 @@
     - name: Start Docker Compose
       command: docker-compose up -d
       args:
-        chdir: /home/ec2-user/
+        chdir: "{{ compose_dir }}"
