@@ -54,7 +54,7 @@ pipeline {
                 echo 'Building App Image'
                 sh 'pwd'
                 sh 'ls -l'
-                sh 'docker build --force-rm -t "$ECR_REGISTRY/$APP_REPO_NAME:latest" -f ./App .'
+                sh 'docker build --force-rm -t "$ECR_REGISTRY/$APP_REPO_NAME:latest" -f ./App/Dockerfile .'
                 sh 'docker image ls'
             }
         }
