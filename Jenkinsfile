@@ -11,7 +11,7 @@ pipeline {
     }
 
     stages {
-            stage("Infra"){
+            stage('Infra'){
                 steps{
                 echo "Creating Key Pair for ${APP_NAME} App"
                 sh "aws ec2 create-key-pair --region ${AWS_REGION} --key-name ${ANS_KEYPAIR} --query KeyMaterial --output text > ${ANS_KEYPAIR}"
@@ -36,7 +36,7 @@ pipeline {
 
 
             }
-            stage("CI"){
+            stage('CI'){
             steps {
                 echo 'Building App Image'
                 sh 'pwd'
@@ -51,7 +51,7 @@ pipeline {
             }
             }
 
-           stage("Wait"){
+           stage('Wait'){
             steps {
                 script {
                     echo 'Waiting for the instance'
@@ -61,7 +61,7 @@ pipeline {
             }
 
             }
-            stage("Config and Deploy"){
+            stage('Config and Deploy'){
                 steps {
                 echo 'env update'
                 sh """
@@ -83,7 +83,7 @@ pipeline {
 
 
             }
-            stage("Destroy Infra"){
+            stage('Destroy Infra'){
             steps{
                 timeout(time:5, unit:'DAYS'){
                     input message:'Approve terminate'
