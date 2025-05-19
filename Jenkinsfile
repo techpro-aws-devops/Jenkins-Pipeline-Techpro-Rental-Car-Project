@@ -44,7 +44,7 @@ pipeline {
             steps {
                 echo 'env update'
                 sh """
-                envsubst < docker-compose-template.yml > docker-compose.yml
+                envsubst < docker-compose-template.yaml > docker-compose.yml
                 """
             }
         }
