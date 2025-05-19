@@ -9,34 +9,47 @@ pipeline {
         APP_REPO_NAME = "techpro-rental-car"
         APP_NAME = "rental"
     }
-
     stages {
-            stage('Infra'){
-                steps{
+        stage('Create Key Pair for Ansible') {
+            steps {
                 echo "Creating Key Pair for ${APP_NAME} App"
                 sh "aws ec2 create-key-pair --region ${AWS_REGION} --key-name ${ANS_KEYPAIR} --query KeyMaterial --output text > ${ANS_KEYPAIR}"
                 sh "chmod 400 ${ANS_KEYPAIR}"
-                }
-                steps{
-                    echo 'Creating Infrastructure for the App on AWS Cloud'
-                    sh "terraform init"
-                    sh "terraform apply -auto-approve"
-                }
-                steps{
-                    echo 'Creating ECR Repo for App'
-                    sh """
+            }
+        }
+
+        stage('Create Infrastructure for the App') {
+            steps {
+                echo 'Creating Infrastructure for the App on AWS Cloud'
+                sh 'terraform init'
+                sh 'terraform apply --auto-approve'
+            }
+        }
+
+        stage('Create ECR Repo') {
+            steps {
+                echo 'Creating ECR Repo for App'
+                sh """
                     aws ecr describe-repositories --region ${AWS_REGION} --repository-name ${APP_REPO_NAME} || \
                     aws ecr create-repository \
                     --repository-name ${APP_REPO_NAME} \
                     --image-scanning-configuration scanOnPush=false \
                     --image-tag-mutability MUTABLE \
                     --region ${AWS_REGION}
-                    """
-                }
-
-
+                """
             }
-            stage('CI'){
+        }
+
+        stage('ENVSUBST UPDATE DOCKER COMPOSE') {
+            steps {
+                echo 'env update'
+                sh """
+                envsubst < docker-compose-template.yml > docker-compose.yml
+                """
+            }
+        }
+
+        stage('Build App Docker Image') {
             steps {
                 echo 'Building App Image'
                 sh 'pwd'
@@ -44,14 +57,18 @@ pipeline {
                 sh 'docker build --force-rm -t "$ECR_REGISTRY/$APP_REPO_NAME:latest" -f ./App/Dockerfile ./App'
                 sh 'docker image ls'
             }
+        }
+
+        stage('Push Image to ECR Repo') {
             steps {
                 echo 'Pushing App Image to ECR Repo'
                 sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin "$ECR_REGISTRY"'
                 sh 'docker push "$ECR_REGISTRY/$APP_REPO_NAME:latest"'
             }
-            }
+        }
 
-           stage('Wait'){
+
+        stage('wait the instance') {
             steps {
                 script {
                     echo 'Waiting for the instance'
@@ -59,17 +76,12 @@ pipeline {
                     sh 'aws ec2 wait instance-status-ok --instance-ids $id'
                 }
             }
+        }
 
-            }
-            stage('Config and Deploy'){
-                steps {
-                echo 'env update'
-                sh """
-                envsubst < docker-compose-template.yaml > docker-compose.yml
-                """
-            }
 
-                steps {
+
+        stage('Deploy the App') {
+            steps {
                 echo 'Deploy the App'
                 sh 'ls -l'
                 sh 'ansible --version'
@@ -80,10 +92,10 @@ pipeline {
                     ansible-playbook -i ./inventory_aws_ec2.yml -e "compose_dir=${env.WORKSPACE}" ./playbook.yml
                 """
              }
+        }
 
 
-            }
-            stage('Destroy Infra'){
+        stage('Destroy the infrastructure'){
             steps{
                 timeout(time:5, unit:'DAYS'){
                     input message:'Approve terminate'
@@ -99,21 +111,17 @@ pipeline {
                 rm -rf ${ANS_KEYPAIR}
                 """
             }
+        }
 
-            }    
-            
     }
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo 'Deleting all local images'
             sh 'docker image prune -af'
         }
-        success {
-            echo 'Pipeline completed successfully!'
-        }
         failure {
-            echo 'Pipeline failed!'
+
             echo 'Delete the Image Repository on ECR due to the Failure'
             sh """
                 aws ecr delete-repository \
@@ -127,11 +135,8 @@ pipeline {
                 """
             echo 'Deleting Terraform Stack due to the Failure'
                 sh 'terraform destroy --auto-approve'
-
         }
-
-
-
+    }
 
 
     }
@@ -139,4 +144,12 @@ pipeline {
 
 
 
-}
+
+
+
+
+
+
+
+
+
